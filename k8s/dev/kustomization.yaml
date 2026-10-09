@@ -3,6 +3,9 @@ kind: Kustomization
 namespace: dev
 resources:
   - namespace.yaml
-  - orders.yaml
-  - payments.yaml
-  - billing.yaml
+  - orders-config.yaml
+  - orders-deployment.yaml
+  - payments-config.yaml
+  - payments-deployment.yaml
+  - billing-config.yaml
+  - billing-deployment.yaml
