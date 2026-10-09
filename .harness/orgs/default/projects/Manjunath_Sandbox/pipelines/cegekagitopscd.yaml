@@ -30,7 +30,7 @@ pipeline:
     - name: gitopsCluster
       type: String
       required: true
-      value: in-cluster
+      value: incluster
     - name: jira_project_key
       type: String
       required: false
