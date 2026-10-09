@@ -7,12 +7,12 @@ pipeline:
   description: |
     Jira-scheduled deploy to DEV.
     A cron trigger runs this pipeline every few minutes. Stage 1 asks Jira for the oldest ticket
-    that has the deploy label, has a Start date that has arrived, and a Due date that has not passed. It claims the ticket and comments "STARTED".
+    that has the deploy label, has a Deployment Start date-time that has arrived, and a Deployment End date-time that has not passed. It claims the ticket and comments "STARTED".
     Stage 2 deploys the services listed on the ticket to dev (multi-service parallel GitOps deploy).
     Stage 3 always runs and comments "COMPLETED" or "FAILED" on the ticket.
     Ticket contract (Jira):
       - label: harness-deploy
-      - Start date and Due date: built-in Jira fields (date only)
+      - Deployment Start / Deployment End: custom Jira Date Time fields
       - Description contains one line:
         patches: orders:1.8.3-p1,payments:2.4.1-p1
     Services not mentioned in the ticket are skipped.
@@ -50,6 +50,16 @@ pipeline:
       description: Added when a ticket is picked up so it is never deployed twice
       required: false
       value: harness-started
+    - name: jira_start_field_name
+      type: String
+      description: Name of the Jira Date Time field holding the deployment start (must be unique in Jira)
+      required: false
+      value: Deployment Start
+    - name: jira_end_field_name
+      type: String
+      description: Name of the Jira Date Time field holding the deployment end (must be unique in Jira)
+      required: false
+      value: Deployment End
   stages:
     - stage:
         name: Find Active Ticket
@@ -116,7 +126,7 @@ pipeline:
                           }
                           TICKET_KEY="NONE"
                           PATCHES="NONE"
-                          JQL="project = ${PROJECT} AND labels = '${DEPLOY_LABEL}' AND labels != '${CLAIMED_LABEL}' AND 'Start date' <= now() AND (duedate is EMPTY OR duedate >= startOfDay()) AND statusCategory != Done ORDER BY 'Start date' ASC"
+                          JQL="project = ${PROJECT} AND labels = '${DEPLOY_LABEL}' AND labels != '${CLAIMED_LABEL}' AND '${START_FIELD}' <= now() AND '${END_FIELD}' >= now() AND statusCategory != Done ORDER BY '${START_FIELD}' ASC"
                           REQUEST_BODY="{\"jql\":\"${JQL}\",\"maxResults\":1,\"fields\":[\"summary\"]}"
                           HTTP_CODE="$(curl -sS -o /tmp/jira-due.json -w "%{http_code}" \
                             -u "${JIRA_EMAIL}:${JIRA_API_TOKEN}" -X POST \
@@ -186,6 +196,12 @@ pipeline:
                       - name: CLAIMED_LABEL
                         type: String
                         value: <+pipeline.variables.jira_claimed_label>
+                      - name: START_FIELD
+                        type: String
+                        value: <+pipeline.variables.jira_start_field_name>
+                      - name: END_FIELD
+                        type: String
+                        value: <+pipeline.variables.jira_end_field_name>
                       - name: EXECUTION_URL
                         type: String
                         value: <+pipeline.executionUrl>
