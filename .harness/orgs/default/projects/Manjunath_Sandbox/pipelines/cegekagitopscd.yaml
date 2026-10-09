@@ -28,11 +28,6 @@ pipeline:
       description: Image name under imageRepo (same image for all services in this demo)
       required: false
       value: nginx
-    - name: gitopsAppName
-      type: String
-      description: Name of the Argo CD / GitOps application that deploys k8s/dev
-      required: false
-      value: multi-service-dev
     - name: gitopsAgentId
       type: String
       required: true
@@ -324,7 +319,7 @@ pipeline:
                     applyOnly: false
                     forceApply: false
                     applicationsList:
-                      - applicationName: <+pipeline.variables.gitopsAppName>
+                      - applicationName: <+service.identifier>-dev
                         agentId: <+pipeline.variables.gitopsAgentId>
                     syncOptions:
                       skipSchemaValidation: false
