@@ -218,9 +218,7 @@ pipeline:
             maxConcurrency: 1
           environment:
             environmentRef: Dev
-            deployToAll: false
-            gitOpsClusters:
-              - identifier: <+pipeline.variables.gitopsCluster>
+            deployToAll: true
           execution:
             steps:
               - step:
