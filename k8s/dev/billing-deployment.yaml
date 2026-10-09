@@ -5,9 +5,7 @@ metadata:
     app: "billing"
     app.kubernetes.io/part-of: "multi-service-demo"
 apiVersion: "apps/v1"
-imageName: "nginx"
 kind: "Deployment"
-gitopsAppPrefix: "multi-service"
 spec:
   template:
     metadata:
