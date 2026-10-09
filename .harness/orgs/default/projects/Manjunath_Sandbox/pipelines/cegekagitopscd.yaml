@@ -7,19 +7,15 @@ pipeline:
   description: |
     Jira-scheduled deploy to DEV.
     A cron trigger runs this pipeline every few minutes. Stage 1 asks Jira for the oldest ticket
-    that has the deploy label, has a Deployment Start Date/Time that has arrived, and has a
-    Deployment End Date/Time that has not passed. It claims the ticket and comments "STARTED".
+    that has the deploy label, has a Start date that has arrived, and a Due date that has not passed. It claims the ticket and comments "STARTED".
     Stage 2 deploys the services listed on the ticket to dev (multi-service parallel GitOps deploy).
     Stage 3 always runs and comments "COMPLETED" or "FAILED" on the ticket.
     Ticket contract (Jira):
       - label: harness-deploy
-      - Deployment Start Date/Time: custom Jira Date Time field
-      - Deployment End Date/Time: custom Jira Date Time field
+      - Start date and Due date: built-in Jira fields (date only)
       - Description contains one line:
         patches: orders:1.8.3-p1,payments:2.4.1-p1
     Services not mentioned in the ticket are skipped.
-    Important: set the two Jira field variables below to the actual custom-field JQL aliases,
-    for example cf[12345]. The fields must be Jira Date Time fields, not Date-only fields.
   allowStageExecutions: true
   variables:
     - name: imageRepo
@@ -49,16 +45,6 @@ pipeline:
       description: Added when a ticket is picked up so it is never deployed twice
       required: false
       value: harness-started
-    - name: jira_start_datetime_jql_field
-      type: String
-      description: JQL alias for the Jira Date Time field used as deployment start time, for example cf[12345]
-      required: true
-      value: cf[REPLACE_WITH_START_FIELD_ID]
-    - name: jira_end_datetime_jql_field
-      type: String
-      description: JQL alias for the Jira Date Time field used as deployment end time, for example cf[12346]
-      required: true
-      value: cf[REPLACE_WITH_END_FIELD_ID]
   stages:
     - stage:
         name: Find Active Ticket
@@ -125,15 +111,7 @@ pipeline:
                           }
                           TICKET_KEY="NONE"
                           PATCHES="NONE"
-                          if ! printf '%s' "$START_FIELD" | grep -Eq '^cf\[[0-9]+\]$'; then
-                            echo "ERROR: jira_start_datetime_jql_field must be a JQL custom-field alias such as cf[12345]. Current value: $START_FIELD"
-                            exit 1
-                          fi
-                          if ! printf '%s' "$END_FIELD" | grep -Eq '^cf\[[0-9]+\]$'; then
-                            echo "ERROR: jira_end_datetime_jql_field must be a JQL custom-field alias such as cf[12346]. Current value: $END_FIELD"
-                            exit 1
-                          fi
-                          JQL="project = ${PROJECT} AND labels = '${DEPLOY_LABEL}' AND labels != '${CLAIMED_LABEL}' AND ${START_FIELD} <= now() AND ${END_FIELD} >= now() AND statusCategory != Done ORDER BY ${START_FIELD} ASC"
+                          JQL="project = ${PROJECT} AND labels = '${DEPLOY_LABEL}' AND labels != '${CLAIMED_LABEL}' AND 'Start date' <= now() AND (duedate is EMPTY OR duedate >= startOfDay()) AND statusCategory != Done ORDER BY 'Start date' ASC"
                           REQUEST_BODY="{\"jql\":\"${JQL}\",\"maxResults\":1,\"fields\":[\"summary\"]}"
                           HTTP_CODE="$(curl -sS -o /tmp/jira-due.json -w "%{http_code}" \
                             -u "${JIRA_EMAIL}:${JIRA_API_TOKEN}" -X POST \
@@ -203,12 +181,6 @@ pipeline:
                       - name: CLAIMED_LABEL
                         type: String
                         value: <+pipeline.variables.jira_claimed_label>
-                      - name: START_FIELD
-                        type: String
-                        value: <+pipeline.variables.jira_start_datetime_jql_field>
-                      - name: END_FIELD
-                        type: String
-                        value: <+pipeline.variables.jira_end_datetime_jql_field>
                       - name: EXECUTION_URL
                         type: String
                         value: <+pipeline.executionUrl>
