@@ -22,7 +22,7 @@ pipeline:
       type: String
       description: Registry namespace. Image = <imageRepo>/<service.variables.imageName>:<tag>
       required: true
-      value: pkg.harness.io/am8hcbditxgqnrtihnl7qq/sruthi-docker
+      value: docker.io/library
     - name: gitopsAgentId
       type: String
       required: true
@@ -275,7 +275,7 @@ pipeline:
                     variables:
                       - name: spec.template.spec.containers[0].image
                         type: String
-                        value: <+pipeline.variables.imageRepo>/<+service.variables.imageName>:<+execution.steps.resolve_patch_tag.output.outputVariables.PATCH_TAG>
+                        value: <+pipeline.variables.imageRepo>/<+serviceVariables.imageName>:<+execution.steps.resolve_patch_tag.output.outputVariables.PATCH_TAG>
               - step:
                   type: MergePR
                   name: Merge PR
@@ -314,7 +314,7 @@ pipeline:
                     applyOnly: false
                     forceApply: false
                     applicationsList:
-                      - applicationName: <+service.variables.gitopsAppPrefix>-dev
+                      - applicationName: <+serviceVariables.gitopsAppPrefix>-dev
                         agentId: <+pipeline.variables.gitopsAgentId>
                     syncOptions:
                       skipSchemaValidation: false
