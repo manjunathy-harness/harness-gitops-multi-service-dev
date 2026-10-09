@@ -18,7 +18,7 @@ spec:
           name: "orders-page"
         name: "page"
       containers:
-      - image: "docker.io/library/nginx:1.29-alpine"
+      - image: "docker.io/library/nginx:1.28-alpine"
         livenessProbe:
           periodSeconds: 10
           initialDelaySeconds: 10
