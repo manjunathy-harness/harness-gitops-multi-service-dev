@@ -30,11 +30,11 @@ pipeline:
     - name: gitopsAgentId
       type: String
       required: true
-      value: <+input>
+      value: cegekarancheragent
     - name: gitopsCluster
       type: String
       required: true
-      value: <+input>
+      value: in-cluster
     - name: jira_project_key
       type: String
       required: false
@@ -77,6 +77,12 @@ pipeline:
                   type: Queue
                   name: Deploy_Queue
                   identifier: Deploy_Queue
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   spec:
                     key: jira-scheduled-deploy
                     scope: Pipeline
@@ -85,6 +91,12 @@ pipeline:
                   name: Poll Jira
                   identifier: Poll_Jira
                   timeout: 10m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   spec:
                     shell: Bash
                     onDelegate: true
@@ -135,7 +147,7 @@ pipeline:
                             cat /tmp/jira-due.json
                             exit 1
                           fi
-                          KEY="$(grep -oE '"key":"[A-Z][A-Z0-9\_]\*-[0-9]+"' /tmp/jira-due.json \
+                          KEY="$(grep -oE '"key":"[A-Z][A-Z0-9_]*-[0-9]+"' /tmp/jira-due.json \
                             | head -1 \
                             | sed -E 's/"key":"([^"]+)"/\1/' || true)"
                           if [ -z "$KEY" ]; then
@@ -155,7 +167,7 @@ pipeline:
                               | grep -oiE 'patches:[[:space:]]*[A-Za-z0-9_.:,-]+' \
                               | head -1 \
                               | sed -E 's/^[^:]*:[[:space:]]*//' || true)"
-                            if printf '%s' "$RAW" | grep -Eq '^[A-Za-z0-9_-]+:[A-Za-z0-9_.-]+(,[A-Za-z0-9_-]+:[A-Za-z0-9_.-]+)\*$'; then
+                            if printf '%s' "$RAW" | grep -Eq '^[A-Za-z0-9_-]+:[A-Za-z0-9_.-]+(,[A-Za-z0-9_-]+:[A-Za-z0-9_.-]+)*$'; then
                               jira_add_label "$KEY" "$CLAIMED_LABEL"
                               jira_comment "$KEY" \
                                 "Deployment STARTED at $(date -u '+%Y-%m-%d %H:%M UTC') to dev. The Jira deployment window has started. Patches: ${RAW}. Harness execution: ${EXECUTION_URL}"
@@ -214,6 +226,12 @@ pipeline:
         when:
           pipelineStatus: Success
           condition: <+pipeline.stages.Find_Due_Ticket.spec.execution.steps.Poll_Jira.output.outputVariables.TICKET_KEY> != "NONE"
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
         spec:
           deploymentType: Kubernetes
           gitOpsEnabled: true
@@ -237,6 +255,12 @@ pipeline:
                   type: ShellScript
                   name: Resolve Patch Tag
                   identifier: resolve_patch_tag
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 5m
                   spec:
                     shell: Bash
@@ -267,6 +291,12 @@ pipeline:
                   type: GitOpsUpdateReleaseRepo
                   name: Update Release Repo
                   identifier: update_release_repo
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 10m
                   when:
                     stageStatus: Success
@@ -280,6 +310,12 @@ pipeline:
                   type: MergePR
                   name: Merge PR
                   identifier: merge_pr
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 10m
                   when:
                     stageStatus: Success
@@ -292,6 +328,12 @@ pipeline:
                   type: GitOpsSync
                   name: Sync App
                   identifier: sync_app
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 15m
                   when:
                     stageStatus: Success
@@ -316,18 +358,18 @@ pipeline:
                   type: RevertPR
                   name: Revert PR
                   identifier: revert_pr
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 10m
                   when:
                     stageStatus: All
                     condition: <+execution.steps.resolve_patch_tag.output.outputVariables.PATCH_TAG> != "NONE"
                   spec:
                     commitId: <+execution.steps.update_release_repo.updateReleaseRepoOutcome.commitId>
-        failureStrategies:
-          - onFailure:
-              errors:
-                - AllErrors
-              action:
-                type: StageRollback
     - stage:
         name: Jira Comment End
         identifier: Jira_Comment_End
@@ -348,6 +390,12 @@ pipeline:
                   type: ShellScript
                   name: Comment Result
                   identifier: Comment_Result
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsFailure
                   timeout: 5m
                   spec:
                     shell: Bash
@@ -361,7 +409,7 @@ pipeline:
                             SUCCEEDED|Success|SUCCESS)
                               TEXT="Deployment COMPLETED SUCCESSFULLY at $(date -u '+%Y-%m-%d %H:%M UTC') in dev. Patches: ${PATCHES}. Harness execution: ${EXECUTION_URL}"
                               ;;
-                            \*)
+                            *)
                               TEXT="Deployment ENDED WITH STATUS ${DEPLOY_STATUS} at $(date -u '+%Y-%m-%d %H:%M UTC') in dev (failed services were rolled back). Patches: ${PATCHES}. Harness execution: ${EXECUTION_URL}"
                               ;;
                           esac
