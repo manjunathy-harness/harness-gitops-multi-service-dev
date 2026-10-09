@@ -23,6 +23,16 @@ pipeline:
       description: Registry namespace. Image = <imageRepo>/<service.variables.imageName>:<tag>
       required: true
       value: docker.io/library
+    - name: imageName
+      type: String
+      description: Image name under imageRepo (same image for all services in this demo)
+      required: false
+      value: nginx
+    - name: gitopsAppName
+      type: String
+      description: Name of the Argo CD / GitOps application that deploys k8s/dev
+      required: false
+      value: multi-service-dev
     - name: gitopsAgentId
       type: String
       required: true
@@ -275,7 +285,7 @@ pipeline:
                     variables:
                       - name: spec.template.spec.containers[0].image
                         type: String
-                        value: <+pipeline.variables.imageRepo>/<+serviceVariables.imageName>:<+execution.steps.resolve_patch_tag.output.outputVariables.PATCH_TAG>
+                        value: <+pipeline.variables.imageRepo>/<+pipeline.variables.imageName>:<+execution.steps.resolve_patch_tag.output.outputVariables.PATCH_TAG>
               - step:
                   type: MergePR
                   name: Merge PR
@@ -314,7 +324,7 @@ pipeline:
                     applyOnly: false
                     forceApply: false
                     applicationsList:
-                      - applicationName: <+serviceVariables.gitopsAppPrefix>-dev
+                      - applicationName: <+pipeline.variables.gitopsAppName>
                         agentId: <+pipeline.variables.gitopsAgentId>
                     syncOptions:
                       skipSchemaValidation: false
