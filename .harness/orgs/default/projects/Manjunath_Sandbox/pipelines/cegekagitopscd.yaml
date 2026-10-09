@@ -251,7 +251,7 @@ pipeline:
                           else
                             echo "Resolved patch tag for $SERVICE_ID: $PATCH_TAG"
                           fi
-                          echo "PATCH_TAG=$PATCH_TAG" >> "$HARNESS_OUTPUT_PATH"
+                          export PATCH_TAG
                     environmentVariables: []
                     outputVariables:
                       - name: PATCH_TAG
