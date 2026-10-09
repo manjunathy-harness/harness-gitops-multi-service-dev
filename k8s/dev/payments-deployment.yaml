@@ -1,53 +1,53 @@
 metadata:
-  name: "payments"
-  namespace: "dev"
+  name: payments
+  namespace: dev
   labels:
-    app: "payments"
-    app.kubernetes.io/part-of: "multi-service-demo"
-apiVersion: "apps/v1"
-kind: "Deployment"
+    app: payments
+    app.kubernetes.io/part-of: multi-service-demo
+apiVersion: apps/v1
+kind: Deployment
 spec:
   template:
     metadata:
       labels:
-        app: "payments"
-        app.kubernetes.io/part-of: "multi-service-demo"
+        app: payments
+        app.kubernetes.io/part-of: multi-service-demo
     spec:
       volumes:
       - configMap:
-          name: "payments-page"
-        name: "page"
+          name: payments-page
+        name: page
       containers:
-      - image: "docker.io/library/nginx:1.27-alpine"
+      - image: docker.io/library/nginx:1.27-alpine
         livenessProbe:
           periodSeconds: 10
           initialDelaySeconds: 10
           httpGet:
-            path: "/"
-            port: "http"
-        name: "nginx"
+            path: /
+            port: http
+        name: nginx
         resources:
           requests:
-            memory: "32Mi"
-            cpu: "25m"
+            memory: 32Mi
+            cpu: 25m
           limits:
-            memory: "64Mi"
-            cpu: "100m"
+            memory: 64Mi
+            cpu: 100m
         readinessProbe:
           periodSeconds: 5
           initialDelaySeconds: 2
           httpGet:
-            path: "/"
-            port: "http"
+            path: /
+            port: http
         ports:
-        - name: "http"
+        - name: http
           containerPort: 80
         volumeMounts:
-        - mountPath: "/usr/share/nginx/html/index.html"
-          name: "page"
+        - mountPath: /usr/share/nginx/html/index.html
+          name: page
           readOnly: true
-          subPath: "index.html"
+          subPath: index.html
   selector:
     matchLabels:
-      app: "payments"
+      app: payments
   replicas: 1
