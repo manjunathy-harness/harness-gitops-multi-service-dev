@@ -245,7 +245,7 @@ pipeline:
           multiDeploymentConfig:
             maxConcurrency: 1
           environment:
-            environmentRef: dev
+            environmentRef: Dev
             deployToAll: false
             gitOpsClusters:
               - identifier: <+pipeline.variables.gitopsCluster>
@@ -344,7 +344,7 @@ pipeline:
                     applyOnly: false
                     forceApply: false
                     applicationsList:
-                      - applicationName: <+service.variables.gitopsAppPrefix>-<+env.identifier>
+                      - applicationName: <+service.variables.gitopsAppPrefix>-dev
                         agentId: <+pipeline.variables.gitopsAgentId>
                     syncOptions:
                       skipSchemaValidation: false
