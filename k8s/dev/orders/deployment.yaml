@@ -38,6 +38,9 @@ spec:
         ports:
         - name: "http"
           containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: fme-keys
         env:
         - name: "PORT"
           value: "3000"
