@@ -1,49 +1,49 @@
-apiVersion: apps/v1
-kind: Deployment
 metadata:
-  name: orders
-  namespace: dev
+  name: "orders"
+  namespace: "dev"
   labels:
-    app: orders
-    app.kubernetes.io/part-of: multi-service-demo
+    app: "orders"
+    app.kubernetes.io/part-of: "multi-service-demo"
+apiVersion: "apps/v1"
+kind: "Deployment"
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: orders
   template:
     metadata:
       labels:
-        app: orders
-        app.kubernetes.io/part-of: multi-service-demo
+        app: "orders"
+        app.kubernetes.io/part-of: "multi-service-demo"
     spec:
       containers:
-      - name: fme-demo
-        image: docker.io/pes2ug19cs219/fme-demo:1.1.0
-        ports:
-        - name: http
-          containerPort: 3000
-        env:
-        - name: PORT
-          value: '3000'
-        - name: FME_LOCALHOST
-          value: '1'
+      - image: "docker.io/pes2ug19cs219/fme-demo:1.1.0"
         livenessProbe:
-          httpGet:
-            path: /api/status
-            port: http
-          initialDelaySeconds: 10
           periodSeconds: 10
-        readinessProbe:
+          initialDelaySeconds: 10
           httpGet:
-            path: /api/status
-            port: http
-          initialDelaySeconds: 3
+            path: "/api/status"
+            port: "http"
+        name: "fme-demo"
+        readinessProbe:
           periodSeconds: 5
+          initialDelaySeconds: 3
+          httpGet:
+            path: "/api/status"
+            port: "http"
         resources:
           requests:
-            memory: 128Mi
-            cpu: 50m
+            memory: "128Mi"
+            cpu: "50m"
           limits:
-            memory: 256Mi
-            cpu: 500m
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - name: "http"
+          containerPort: 3000
+        env:
+        - name: "PORT"
+          value: "3000"
+        - name: "FME_LOCALHOST"
+          value: "1"
+  selector:
+    matchLabels:
+      app: "orders"
+  replicas: 1
