@@ -22,12 +22,12 @@ pipeline:
       type: String
       description: Registry namespace. Image = <imageRepo>/<service.variables.imageName>:<tag>
       required: true
-      value: docker.io/library
+      value: docker.io/pes2ug19cs219
     - name: imageName
       type: String
       description: Image name under imageRepo (same image for all services in this demo)
       required: false
-      value: nginx
+      value: fme-demo
     - name: gitopsAgentId
       type: String
       required: true
